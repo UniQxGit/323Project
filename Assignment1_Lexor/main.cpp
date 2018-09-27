@@ -59,20 +59,6 @@ int main(int argc, const char * argv[]) {
         std::cout << "Failed to open file.." << std::endl;
     }
     
-//    std::cout << "LOADED SEPARATORS: " << std::endl;
-//    myfile.open("separators.txt");
-//    if (myfile.is_open())
-//    {
-//        while ( getline (myfile,line) )
-//        {
-//            std::cout << line << std::endl;
-//            tokens[line] = Separator;
-//        }
-//        myfile.close();
-//    }else{
-//        std::cout << "Failed to open file.." << std::endl;
-//    }
-    
     std::cout << std::endl;
     currentState = Start;
     myfile.open("code.txt");
@@ -106,12 +92,6 @@ bool DFSM(std::string str)
             check << c;
         GetState(c,check);
         //std::cout << "|" << check.str() << "|" << std::endl;
-        if (currentState == Final)
-        {
-            currentState = Start;
-            std::cout << std::left << std::setw(15) << LexToStr(type) << check.str() << std::endl;
-            check.str("");
-        }
     }
     return false;
 }
@@ -128,50 +108,40 @@ void GetState(char& input, std::stringstream& check)
     switch(currentState)
     {
         case Start:
-            if (input == ' ' || input == '\n')
+            if (input == ' ' || input == '\n' || input == '\t')
             {
                 ResetState(check);
                 return;
             }
-            
-            if (tokens[std::string(1,input)] == Separator)
+            if (tokens[std::string(1,input)] != NoMatch)
             {
-                PrintLexeme(Separator, std::string(1,input));
-                ResetState(check);
-            }else if (tokens[std::string(1,input)] == Operator)
-            {
-                PrintLexeme(Operator, std::string(1,input));
+                PrintLexeme(tokens[std::string(1,input)], std::string(1,input));
                 ResetState(check);
             }else if (CheckLetter(input))
             {
+//                std::cout << input << "->Identifier" << std::endl;
                 currentState = StateIdentifier;
             }
             else if (CheckInt(input)){
+//                std::cout << input << "->Integer" << std::endl;
                 currentState = StateInteger;
             }else if (tokens[std::string(1,input)] == Comment)
             {
+//                std::cout << input << "->Comment" << std::endl;
                 currentState = StateComment;
             }else{
+//                std::cout << input << "->NoMatch" << std::endl;
                 currentState = StateNoMatch;
             }
             break;
         case StateNoMatch:
-            if (tokens[check.str()] == Operator)
+            if (tokens[check.str()] != NoMatch)
             {
                 PrintLexeme(Operator, check.str());
                 ResetState(check);
-            }else if (tokens[check.str()] == Separator)
+            }else if(input == ' ' || input == '\n' || input == '\t')
             {
-                PrintLexeme(Separator, check.str());
-                ResetState(check);
-            }else if (tokens[check.str()] == Keyword)
-            {
-                PrintLexeme(Keyword, check.str());
-                ResetState(check);
-            }
-            else if(input == ' ' || input == '\n')
-            {
-                PrintLexeme(Identifier, check.str());
+                PrintLexeme(NoMatch, check.str());
                 ResetState(check);
             }
             break;
@@ -189,19 +159,6 @@ void GetState(char& input, std::stringstream& check)
                 PrintLexeme(Identifier, check.str().erase(check.str().find(input)));
                 ResetState(check);
                 GetState(input,check);
-            }
-            break;
-        case StateKeyword:
-//            if (tokens[check.str()] == Keyword)
-//            {
-                //PrintLexeme(Keyword, check.str());
-//            }
-            break;
-        case StateSeparator:
-            if (tokens[std::string(1,input)] == Separator)
-            {
-                ResetState(check);
-                PrintLexeme(Separator, check.str());
             }
             break;
         case StateInteger:
@@ -305,7 +262,7 @@ bool CheckInt(char c)
 
 bool CheckLetter(char c)
 {
-    return ((c >= 65 && c <= 90) || (c >= 97 && c <= 122));
+    return ((c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c == '_');
 }
 
 void PrintLexeme(LexorType type,std::string lexeme)
