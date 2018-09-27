@@ -14,46 +14,64 @@
 #include <string>
 #include <sstream>
 
-enum State { Start, StateSeparator, StateKeyword, Final };
-enum LexorType { Identifier=0, Keyword=1, Separator=2, Operator=3, Literal = 4};
+enum State { Start, StateNoMatch, StateIdentifier, StateKeyword, StateSeparator, StateOperator, StateInteger, StateReal, StateComment, Final };
+enum LexorType {NoMatch = 0, Identifier=1, Keyword=2, Separator=3, Operator=4, Integer = 5, Real = 6, Comment = 7};
 std::string LexToStr(LexorType l);
-LexorType GetState(char& input, std::stringstream& check);
+LexorType StrToLex(std::string str);
+void ResetState(std::stringstream& check);
+void GetState(char& input, std::stringstream& check);
+void PrintLexeme(LexorType type,std::string lexeme);
 bool DFSM(std::string str);
+bool CheckInt(char c);
+bool CheckLetter(char c);
 
 State currentState;
 std::map<std::string,LexorType> tokens;
 
 int main(int argc, const char * argv[]) {
     
-    //Read in Keywords.txt
-    std::cout << "LOADED KEYWORDS: " << std::endl;
-    std::ifstream myfile ("keywords.txt");
+    //Read in Tokens.txt
+    std::cout << "LOADED Tokens: " << std::endl;
+    std::ifstream myfile ("tokens.txt");
     std::string line;
+    
     if (myfile.is_open())
     {
+        LexorType curLexor;
+        
+        
         while ( getline (myfile,line) )
         {
-            std::cout << line << std::endl;
-            tokens[line] = Keyword;
+            if(line == "--KEYWORDS--")
+                curLexor = Keyword;
+            else if (line == "--SEPARATORS--")
+                curLexor = Separator;
+            else if (line == "--OPERATORS--")
+                curLexor = Operator;
+            else if (line == "--COMMENT--")
+                curLexor = Comment;
+
+            tokens[line] = curLexor;
+            std::cout << std::left << std::setw(15) << line << LexToStr(curLexor) << std::endl;
         }
         myfile.close();
     }else{
         std::cout << "Failed to open file.." << std::endl;
     }
     
-    std::cout << "LOADED SEPARATORS: " << std::endl;
-    myfile.open("separators.txt");
-    if (myfile.is_open())
-    {
-        while ( getline (myfile,line) )
-        {
-            std::cout << line << std::endl;
-            tokens[line] = Separator;
-        }
-        myfile.close();
-    }else{
-        std::cout << "Failed to open file.." << std::endl;
-    }
+//    std::cout << "LOADED SEPARATORS: " << std::endl;
+//    myfile.open("separators.txt");
+//    if (myfile.is_open())
+//    {
+//        while ( getline (myfile,line) )
+//        {
+//            std::cout << line << std::endl;
+//            tokens[line] = Separator;
+//        }
+//        myfile.close();
+//    }else{
+//        std::cout << "Failed to open file.." << std::endl;
+//    }
     
     std::cout << std::endl;
     currentState = Start;
@@ -73,7 +91,7 @@ int main(int argc, const char * argv[]) {
     }
     
     DFSM(ss.str());
-    return 0;
+     return 0;
 }
 
 bool DFSM(std::string str)
@@ -81,11 +99,12 @@ bool DFSM(std::string str)
     std::stringstream check;
     LexorType type;
     
-    std::cout << std::left << std::setw(15) << "TOKEN" << "LEXEME" << std::endl;
+    std::cout << "--------\n" << "OUTPUT" << "\n--------" << std::endl;
+    std::cout << std::left << std::setw(15) << "TOKEN" << "LEXEME"  << std::endl;
     for(char& c : str) {
-        if (c != '\n' && c != ' ')
+        if (c != '\n' && c != ' ' && c != '\t')
             check << c;
-        type = GetState(c,check);
+        GetState(c,check);
         //std::cout << "|" << check.str() << "|" << std::endl;
         if (currentState == Final)
         {
@@ -97,52 +116,140 @@ bool DFSM(std::string str)
     return false;
 }
 
-LexorType GetState(char& input, std::stringstream& check)
+void ResetState(std::stringstream& check)
 {
+    currentState = Start;
+    check.str("");
+}
+
+void GetState(char& input, std::stringstream& check)
+{
+    //std::cout << input << "|" << check.str() << std::endl;
     switch(currentState)
     {
         case Start:
             if (input == ' ' || input == '\n')
-                return Identifier;
-            
-            if (tokens[check.str()] == Separator)
             {
-                std::cout << std::left << std::setw(15) << LexToStr(Separator) << input << std::endl;
-                currentState = StateSeparator;
-                return Literal;
-            }else{
-                currentState = StateKeyword;
-                return Identifier;
+                ResetState(check);
+                return;
             }
+            
+            if (tokens[std::string(1,input)] == Separator)
+            {
+                PrintLexeme(Separator, std::string(1,input));
+                ResetState(check);
+            }else if (tokens[std::string(1,input)] == Operator)
+            {
+                PrintLexeme(Operator, std::string(1,input));
+                ResetState(check);
+            }else if (CheckLetter(input))
+            {
+                currentState = StateIdentifier;
+            }
+            else if (CheckInt(input)){
+                currentState = StateInteger;
+            }else if (tokens[std::string(1,input)] == Comment)
+            {
+                currentState = StateComment;
+            }else{
+                currentState = StateNoMatch;
+            }
+            break;
+        case StateNoMatch:
+            if (tokens[check.str()] == Operator)
+            {
+                PrintLexeme(Operator, check.str());
+                ResetState(check);
+            }else if (tokens[check.str()] == Separator)
+            {
+                PrintLexeme(Separator, check.str());
+                ResetState(check);
+            }else if (tokens[check.str()] == Keyword)
+            {
+                PrintLexeme(Keyword, check.str());
+                ResetState(check);
+            }
+            else if(input == ' ' || input == '\n')
+            {
+                PrintLexeme(Identifier, check.str());
+                ResetState(check);
+            }
+            break;
+        case StateIdentifier:
+            if (input == ' ' || input == '\n' || input == '$')
+            {
+                PrintLexeme(Identifier, check.str());
+                ResetState(check);
+            }else if (tokens[check.str()] == Keyword)
+            {
+                PrintLexeme(Keyword, check.str());
+                ResetState(check);
+            }else if (!CheckInt(input) && !CheckLetter(input))
+            {
+                PrintLexeme(Identifier, check.str().erase(check.str().find(input)));
+                ResetState(check);
+                GetState(input,check);
+            }
+            break;
+        case StateKeyword:
+//            if (tokens[check.str()] == Keyword)
+//            {
+                //PrintLexeme(Keyword, check.str());
+//            }
             break;
         case StateSeparator:
             if (tokens[std::string(1,input)] == Separator)
             {
-                std::cout << std::left << std::setw(15) << LexToStr(Literal) << check.str() << std::endl;
-                check.str(std::string(1,input));
-                currentState = Final;
-                return Separator;
+                ResetState(check);
+                PrintLexeme(Separator, check.str());
             }
             break;
-        case StateKeyword:
+        case StateInteger:
             if (input == ' ' || input == '\n')
             {
-                currentState = Final;
-                return Identifier;
-            }else if (tokens[check.str()] == Keyword)
+                PrintLexeme(Integer, check.str());
+                ResetState(check);
+            }else if (!CheckInt(input))
             {
-                currentState = Final;
-                return Keyword;
+                PrintLexeme(Integer, check.str().erase(check.str().find(input)));
+                ResetState(check);
+                GetState(input,check);
+            }else if (input == '.')
+            {
+                currentState = StateReal;
+                GetState(input, check);
+            }
+            break;
+        case StateReal:
+            if (input == ' ' || input == '\n')
+            {
+                PrintLexeme(Real, check.str());
+                ResetState(check);
+            }else if (!CheckInt(input))
+            {
+                PrintLexeme(Real, check.str().erase(check.str().find(input)));
+                ResetState(check);
+                GetState(input,check);
+            }
+            break;
+        case StateComment:
+            if (tokens[std::string(1,input)] == Comment)
+            {
+                PrintLexeme(Comment, check.str());
+                ResetState(check);
             }
             break;
     }
-    return Literal;
+
 }
 
 std::string LexToStr(LexorType l)
 {
     switch(l)
     {
+        case NoMatch:
+            return "No Match";
+            break;
         case Keyword:
             return "Keyword";
             break;
@@ -155,8 +262,54 @@ std::string LexToStr(LexorType l)
         case Operator:
             return "Operator";
             break;
-        case Literal:
-            return "Literal";
+        case Integer:
+            return "Integer";
+            break;
+        case Real:
+            return "Real";
+            break;
+        case Comment:
+            return "Comment";
+            break;
+        default:
+            return "";
             break;
     }
+}
+
+//string type not recognized in switch statement
+LexorType StrToLex(std::string str)
+{
+    if (str == "Keyword")
+        return Keyword;
+    else if (str == "Separator")
+        return Separator;
+    else if (str == "Identifier")
+        return Identifier;
+    else if (str == "Operator")
+        return Operator;
+    else if (str == "Integer")
+        return Integer;
+    else if (str == "Real")
+        return Real;
+    else if (str == "Comment")
+        return Comment;
+    else
+        return NoMatch;
+}
+
+bool CheckInt(char c)
+{
+    return (c >= 48 && c <= 57);
+}
+
+bool CheckLetter(char c)
+{
+    return ((c >= 65 && c <= 90) || (c >= 97 && c <= 122));
+}
+
+void PrintLexeme(LexorType type,std::string lexeme)
+{
+    lexeme = "|" + lexeme + "|";
+    std::cout << std::left << std::setw(15) << LexToStr(type) << lexeme << std::endl;
 }
