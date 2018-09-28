@@ -168,7 +168,7 @@ LexorType AcceptingToLex(int state, char& input, std::string str);
             if (col != 1 && col != 7)
                 check << input;
             PrintLexeme(AcceptingToLex(currentState,input,check.str()),check.str());
-            if (Lexer_DFSM_State[currentState][col] == 12)
+            if (CheckAccepted(Lexer_DFSM_State[currentState][col]) && Lexer_DFSM_State[currentState][col] != currentState)
             {
                 check.str("");
                 GetState(input,check);
