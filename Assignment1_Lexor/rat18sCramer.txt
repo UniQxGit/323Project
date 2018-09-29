@@ -20,4 +20,4 @@ function getCramerY [a:int, b:int, c:int, d:int, e:int, f:int]
 	Y = getCramerY(a, b, c, d, e, f);
 	
 	put(X);
-	put(Y);
+	put(Y); 
