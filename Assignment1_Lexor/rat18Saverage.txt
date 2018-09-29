@@ -5,4 +5,4 @@
 
 	get(a, b, c);
 	avg = (a + b + c) / 3;
-	put(avg); 
+	put(avg);
