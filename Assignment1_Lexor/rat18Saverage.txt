@@ -1,0 +1,8 @@
+! this sample code averages three user defined numbers !
+
+%%
+	int a, b, c, avg;
+
+	get(a, b, c);
+	avg = (a + b + c) / 3;
+	put(avg); 

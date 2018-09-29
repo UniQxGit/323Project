@@ -1,0 +1,23 @@
+! this sample code calculates X and Y for the Cramer's rule system !
+
+function getCramerX$ [a:int, b:int, c:int, d:int, e:int, f:int]
+{
+	return ((c*e) - (b*f)/((a*e) - (b*d));
+}
+
+function getCramerY [a:int, b:int, c:int, d:int, e:int, f:int]
+{
+	return ((a*f) - (c*d))/((a*e) - (b*d));
+}
+
+
+%%
+	int a, b, c, d, e, f, X, Y;
+
+	get(a, b, c, d, e, f);
+	
+	X = getCramerX$(a, b, c, d, e ,f);
+	Y = getCramerY(a, b, c, d, e, f);
+	
+	put(X);
+	put(Y);
