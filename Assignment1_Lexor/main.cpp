@@ -48,6 +48,7 @@ LexorType AcceptingToLex(int state, char& input, std::string str);
 
     int currentState;
     std::map<std::string,LexorType> tokens;
+	std::ofstream ofile;		//initialize output file stream
 
     int main(int argc, const char * argv[]) {
         
@@ -82,7 +83,10 @@ LexorType AcceptingToLex(int state, char& input, std::string str);
         
         std::cout << std::endl;
         currentState = Start;
-        myfile.open("code.txt");
+		std::cout << "Enter a filename: ";	//change here to add user-inputted file
+		std::string fname;
+		std::cin >> fname;
+        myfile.open(fname);		//change ends here
         std::stringstream ss;
         char c;
         if (myfile.is_open())
@@ -97,7 +101,9 @@ LexorType AcceptingToLex(int state, char& input, std::string str);
             std::cout << "Failed to open file.." << std::endl;
         }
         
+		ofile.open("lexeme.txt");	//outputs lexeme results to file
         DFSM(ss.str());
+		ofile.close();				//closes file stream
          return 0;
     }
 
@@ -290,4 +296,5 @@ LexorType AcceptingToLex(int state, char& input, std::string str);
     {
         lexeme = "|" + lexeme + "|";
         std::cout << std::left << std::setw(15) << LexToStr(type) << lexeme << std::endl;
+		ofile << std::left << std::setw(15) << LexToStr(type) << lexeme << std::endl;	//outputs line as given in console output above, to file
     }
