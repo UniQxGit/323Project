@@ -10,7 +10,9 @@
 #ifndef Parser_h
 #define Parser_h
 
+#include "Lexor.h"
 using namespace std;
+
 
 void Rat18s();
 void OptFunctionDefinitions();
@@ -27,6 +29,7 @@ void OptDeclarationList();
 void DeclarationList();
 void DeclarationlistPrime();
 void Declaration();
+
 void IDs();
 void IDsPrime();
 void StatementList();
@@ -40,6 +43,7 @@ void Return();
 void ReturnPrime();
 void Print();
 void Scan();
+
 void While();
 void Condition();
 void Relop();
@@ -55,6 +59,8 @@ void Rat18s()
 {
     cout << "<Rat18S> -> <Opt Function Definitions> %% <Opt Declaration List> <Statement List>" << endl;
     OptFunctionDefinitions();
+    Lexeme lex = GetLex();
+    PrintLexeme(lex.token,lex.lexeme);
 }
 
 void OptFunctionDefinitions()
