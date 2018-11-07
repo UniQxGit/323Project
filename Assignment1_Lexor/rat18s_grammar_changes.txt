@@ -1,0 +1,62 @@
+Old R25
+<Expression>  ::=    <Expression> + <Term>    | <Expression>  - <Term>    |    <Term>
+
+New R25 - Removed Left Recursion
+<Expression> ::= <Term><Expression Prime>
+<Expression Prime> ::= + <Term><Expression Prime> | - <Term><Expression Prime> | <Term>
+
+Old R26
+<Term>    ::=      <Term>  *  <Factor>     |   <Term>  /  <Factor>     |     <Factor>
+
+New R26 - Removed Left Recursion
+<Term> ::= <Factor><Term Prime>
+<Term Prime> ::= * <Factor><Term Prime> | / <Factor><Term Prime> | <Factor>
+
+Old R3
+<Function Definitions>  ::= <Function> | <Function> <Function Definitions>   
+
+New R3
+<Function Definitions> ::= <Function> <Function Definitions Prime>
+<Function Definitions Prime> ::= <Function Definitions> | <Empty>
+
+Old R6
+<Parameter List> ::= <Parameter> | <Parameter> , <Parameter List>
+
+New R6
+<Parameter List> ::= <Parameter> , <Parameter List Prime>
+<Parameter List Prime> ::= <Parameter List> | <Empty>
+
+Old R11
+<Declaration List>  ::= <Declaration> ;     |      <Declaration> ; <Declaration List>
+
+New R11
+<Declaration List> ::= <Declaration>; <Declaration List Prime>
+<Declaration List Prime> ::= <Declaration List> | <Empty>
+
+Old R13
+<IDs> ::=     <Identifier>    | <Identifier>, <IDs>
+
+New R13
+<IDs> ::= <Identifier> <IDs Prime>
+<IDs Prime> ::= <IDs> | <Empty>
+
+Old R14
+<Statement List> ::=   <Statement>   | <Statement> <Statement List>
+
+New R14
+<Statement List> ::= <Statement> <Statement List Prime>
+<Statement List Prime> ::= <Statement List> | <Empty>
+
+Old R18
+<If> ::= if ( <Condition> ) <Statement> endif | if  ( <Condition>  ) <Statement>   else  <Statement>  endif   
+
+New R18
+<If> ::= if (<Condition>) <Statement> <If Prime>
+<If Prime> ::= endif | else <Statement> endif
+
+Old R19
+<Return> ::= return; | return <Expression>;
+
+New R19
+<Return> ::= return <Return Prime>;
+<Return Prime> ::= <Expression> | <Empty>

@@ -13,6 +13,7 @@
     #include <fstream>
     #include <string>
     #include <sstream>
+    #include "Parser.h"
 
     enum State { Start=0, StateNoMatch=1, StateIdentifier=2, StateIdentifierLoop=3, StateInteger=4, StateReal=5, StateComment=6, StateMatch=7};
     enum LexorType {NoMatch = 0, Identifier=1, Keyword=2, Separator=3, Operator=4, Integer = 5, Real = 6, Comment = 7};
@@ -25,23 +26,23 @@
     bool CheckInt(char c);
     bool CheckLetter(char c);
     bool CheckAccepted(int state);
-LexorType AcceptingToLex(int state, char& input, std::string str);
+    LexorType AcceptingToLex(int state, char& input, std::string str);
 
     const int Lexer_DFSM_State[13][9] =
     {
-        11, 11,  2,  4,  8,  6, 10,  0, 10,
-        11, 12,  2,  2,  8, 10,  1,  1, 10,
-        11,  1,  2,  2,  8, 10,  1,  1, 10,
-        11, 12, 10,  4,  8,  6, 10,  3, 10,
-        11,  3, 10,  4,  8,  6, 10,  3, 10,
-        11, 12, 10,  6,  8, 10, 10,  5, 10,
-        11,  5, 10,  6,  8, 10, 10,  5, 10,
-         8,  8,  8,  8,  7,  8,  8,  8,  8,
-         8,  8,  8,  8,  7,  8,  8,  8,  8,
-        11, 12, 10, 10,  7, 10, 10,  9, 10,
-        11, 12, 10, 10,  7, 10, 10,  9, 10,
-        11, 11, 11, 11, 11, 11, 11, 11, 11,
-        12, 12, 12, 12, 12, 12, 12, 12, 11
+        11, 11,  2,  4,  8,  6, 10,  0, 10, //A Starting state
+        11, 12,  2,  2,  8, 10,  1,  1, 10, //B Identifier
+        11,  1,  2,  2,  8, 10,  1,  1, 10, //B1
+        11, 12, 10,  4,  8,  6, 10,  3, 10, //C Integer
+        11,  3, 10,  4,  8,  6, 10,  3, 10, //C1
+        11, 12, 10,  6,  8, 10, 10,  5, 10, //D Real
+        11,  5, 10,  6,  8, 10, 10,  5, 10, //D1
+         8,  8,  8,  8,  7,  8,  8,  8,  8, //E Comment
+         8,  8,  8,  8,  7,  8,  8,  8,  8, //E1
+        11, 12, 10, 10,  7, 10, 10,  9, 10, //F No Match
+        11, 12, 10, 10,  7, 10, 10,  9, 10, //F1 
+        11, 11, 11, 11, 11, 11, 11, 11, 11, //H Single Character Match
+        12, 12, 12, 12, 12, 12, 12, 12, 11  //G Multi Cahracter Match
     };
 
     const int Lexer_DFSM_Accepted[6] = {11,1,3,5,7,12};
@@ -52,6 +53,7 @@ LexorType AcceptingToLex(int state, char& input, std::string str);
 
     int main(int argc, const char * argv[]) {
         
+
         //Read in Tokens.txt
         std::cout << "LOADED Tokens: " << std::endl;
         std::ifstream myfile ("tokens.txt");
@@ -83,10 +85,11 @@ LexorType AcceptingToLex(int state, char& input, std::string str);
         
         std::cout << std::endl;
         currentState = Start;
-		std::cout << "Enter a filename: ";	//change here to add user-inputted file
+		std::cout << "Enter a filename (Without Extension): ";	//change here to add user-inputted file
 		std::string fname;
 		std::cin >> fname;
-        myfile.open(fname);		//change ends here
+        fname += ".txt";
+        myfile.open("TestCases/" + fname);		//change ends here
         std::stringstream ss;
         char c;
         if (myfile.is_open())
@@ -94,7 +97,6 @@ LexorType AcceptingToLex(int state, char& input, std::string str);
             while ( myfile.get (c) )
             {
                 ss << c;
-                //std::cout << "GOT: " <<  ss.str() << std::endl;
             }
             myfile.close();
         }else{
@@ -104,6 +106,8 @@ LexorType AcceptingToLex(int state, char& input, std::string str);
 		ofile.open("lexeme.txt");	//outputs lexeme results to file
         DFSM(ss.str());
 		ofile.close();				//closes file stream
+        
+        Rat18s();
          return 0;
     }
 
