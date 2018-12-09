@@ -2,7 +2,7 @@
 //  Lexor.h
 //  323_SimpleLexorAssignment
 //
-//  Created by ZempleGames on 11/6/18.
+//  Created by John on 11/6/18.
 //  Copyright © 2018 UniQx. All rights reserved.
 //
 
@@ -15,7 +15,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <vector>
+#include <queue>
 #include <iostream>
 
 
@@ -39,7 +39,7 @@ class Lexeme
 public:
     LexorType token;
     std::string lexeme;
-
+    
     Lexeme(LexorType t, std::string l)
     {
         token = t;
@@ -55,7 +55,7 @@ public:
 
 Lexeme GetLex();
 
-std::vector<Lexeme> lexemes;
+std::queue<Lexeme> lexemes;
 
 
 const int Lexer_DFSM_State[13][9] =
@@ -63,7 +63,7 @@ const int Lexer_DFSM_State[13][9] =
     11, 11,  2,  4,  8,  6, 10,  0, 10, //A Starting state
     11, 12,  2,  2,  8, 10,  1,  1, 10, //B Identifier
     11,  1,  2,  2,  8, 10,  1,  1, 10, //B1
-    11, 12, 10,  4,  8,  6, 10,  3, 10, //C Integer
+    11, 12, 10,  4,  8,  6, 10,  3, 10, //dfsC Integer
     11,  3, 10,  4,  8,  6, 10,  3, 10, //C1
     11, 12, 10,  6,  8, 10, 10,  5, 10, //D Real
     11,  5, 10,  6,  8, 10, 10,  5, 10, //D1
@@ -104,6 +104,7 @@ void LoadTokens(std::string fileName)
                 curLexor = Operator;
             else if (line == "--COMMENT--")
                 curLexor = Comment;
+            
             
             tokens[line] = curLexor;
             std::cout << std::left << std::setw(15) << line << LexToStr(curLexor) << std::endl;
@@ -326,18 +327,28 @@ bool CheckLetter(char c)
 
 Lexeme GetLex()
 {
-    Lexeme lex = lexemes.front();
+    Lexeme lex;
+    if (lexemes.empty())
+    {
+        lex = Lexeme(NoMatch,"$");
+        return lex;
+    }
+    
+    lex = lexemes.front();
+    lexemes.pop();
     while (lex.token == Comment)
     {
         lex = lexemes.front();
-        lexemes.erase(lexemes.begin());
+        lexemes.pop();
     }
+    
+    ofile << "GotLexor: " << std::left << std::setw(15) << LexToStr(lex.token) << "|" << lex.lexeme << "|" << std::endl;
     return lex;
 }
 
 void PrintLexeme(LexorType type,std::string lexeme)
 {
-    lexemes.push_back(Lexeme(type,lexeme));
+    lexemes.push(Lexeme(type,lexeme));
     lexeme = "|" + lexeme + "|";
     std::cout << std::left << std::setw(15) << LexToStr(type) << lexeme << std::endl;
     ofile << std::left << std::setw(15) << LexToStr(type) << lexeme << std::endl;    //outputs line as given in console output above, to file

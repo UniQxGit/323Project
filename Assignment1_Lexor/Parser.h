@@ -55,12 +55,20 @@ void Factor();
 void Primary();
 void Empty();
 
+Lexeme currentLex;
+
+void Lexor(){
+    currentLex = GetLex();
+    PrintLexeme(currentLex.token,currentLex.lexeme);
+}
+
 void Rat18s()
 {
+    Lexor();
     cout << "<Rat18S> -> <Opt Function Definitions> %% <Opt Declaration List> <Statement List>" << endl;
     OptFunctionDefinitions();
-    Lexeme lex = GetLex();
-    PrintLexeme(lex.token,lex.lexeme);
+    
+    
 }
 
 void OptFunctionDefinitions()
