@@ -68,7 +68,7 @@ void Lexor(){
 }
 
 bool Lexor(std::string expected){
-    currentLex = GetidLex();
+    currentLex = GetLex();
     
     std::string check;
     if (currentLex.token == Identifier)

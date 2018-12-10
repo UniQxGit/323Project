@@ -10,6 +10,7 @@
 #ifndef CodeGenerator_h
 #define CodeGenerator_h
 
+#include <vector>
 struct Symbol
 {
 	Lexeme lex;
@@ -22,15 +23,33 @@ struct Symbol
 };
 
 
+struct Instruction
+{
+    std::string name;
+    int address;
+    int index;
+    Instruction(){}
+    Instruction(std::string name,int address,int index){
+        this->name = name;
+        this->address = address;
+        this->index = index;
+    }
+};
+
 std::map<std::string,Symbol> symbols; //Lexeme,
-std::map<std::string,int> instructions;
+std::vector<Instruction*> instructions;
+//std::map<std::string,int> instructions;
 const int MLOCBASE = 2000;
 const int NULLADDR = -999;
 int addressCounter = 0;
+int instructionCounter = 0;
 
-void GenerateInstruction(std::string instruction, int address)
+Instruction* GenerateInstruction(std::string instruction, int address)
 {
-	instructions[instruction] = address;
+	Instruction *inst = new Instruction(instruction,address,instructionCounter);
+    instructions.push_back(inst);
+    instructionCounter++;
+    return inst;
 }
 
 void InsertSymbol(Lexeme lex)
@@ -55,10 +74,10 @@ void PrintAllInstructions()
 	ofile << std::left << std::setw(15) << "__Index__" << std::left << std::setw(15) << "__Operation__" << "__Operand__" << std::endl;
 	
 	int i = 0;
-	for (auto const& x : instructions)
-	{
+    for(Instruction* inst : instructions)
+    {
 		//x.First = key x.second = value
-		ofile << std::left << std::setw(15) << i << std::left << std::setw(15) << x.first << (x.second!=NULLADDR?std::to_string(x.second):"") << std::endl;
+		ofile << std::left << std::setw(15) << inst->index << std::left << std::setw(15) << inst->name << (inst->address!=NULLADDR?std::to_string(inst->address):"") << std::endl;
 	    i++;
 	}
 	ofile << std::endl;
