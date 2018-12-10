@@ -431,12 +431,13 @@ void Compound()
 void Assign()
 {
     ofile << "\t<Assign> -> <Identifier> = <Expression> ;" << endl;
-    GenerateInstruction("POPM",GetAddress(currentLex));
+    int addr = GetAddress(currentLex);
+    
     Lexor();
     if (currentLex.lexeme == "="){
         Lexor();
         Expression();
-
+        GenerateInstruction("POPM",addr);
         if (currentLex.lexeme == ";"){
             Lexor();
         }
@@ -532,9 +533,9 @@ void Print()
         ofile << "\t<Print> -> put ( <Expression> );" << endl;
         Lexor();
         if (currentLex.lexeme == "("){
-            GenerateInstruction("STDOUT",NULLADDR);
             Lexor();
             Expression();
+            GenerateInstruction("STDOUT",NULLADDR);
             if (currentLex.lexeme == ")"){
                 Lexor();
                 if (currentLex.lexeme == ";"){
@@ -628,48 +629,67 @@ void Condition()
 {
     ofile << "\t<Condition> -> <Expression> <Relop> <Expression>" << endl;
     Expression();
+    std::string op = currentLex.lexeme;
     Relop();
     Expression();
     
+    if (op == "==")
+        GenerateInstruction("EQU", NULLADDR);
+    else if (op == "^=")
+        GenerateInstruction("NEQ", NULLADDR);
+    else if (op == ">")
+        GenerateInstruction("GRT", NULLADDR);
+    else if (op == "<")
+        GenerateInstruction("LES", NULLADDR);
+    else if (op == "=>")
+        GenerateInstruction("GEQ", NULLADDR);
+    else if (op == "=<")
+        GenerateInstruction("LEQ", NULLADDR);
 }
 
 void Relop()
 {
-    ofile << "\t<Relop> -> == | ^= | > | < | => | =<" << endl;
-    if (currentLex.lexeme == "==") {
-        ofile << "\t<Relop> -> ==" << endl;
-        //outfile << "<Relop> -> ==" << endl;
-        Lexor();
-    }
-    else if (currentLex.lexeme == "^=") {
-        ofile << "\t<Relop> -> ^=" << endl;
-        //outfile << "<Relop> -> ^=" << endl;
-        Lexor();
-    }
-    else if (currentLex.lexeme == ">") {
-        ofile << "\t<Relop> -> >" << endl;
-        //outfile << "<Relop> -> >" << endl;
-        Lexor();
-    }
-    else if (currentLex.lexeme == "<") {
-        ofile << "\t<Relop> -> <" << endl;
-        //outfile << "<Relop> -> <" << endl;
-        Lexor();
-    }
-    else if (currentLex.lexeme == "=>") {
-        ofile << "\t<Relop> -> =>" << endl;
-        //outfile << "<Relop> -> =>" << endl;
-        Lexor();
-    }
-    else if (currentLex.lexeme == "=<") {
-        ofile << "\t<Relop> -> =<" << endl;
-        //outfile << "<Relop> -> =<" << endl;
-        Lexor();
-    }
-    else {
-        ofile << "<Relop> is invalid" << endl;
-        //outfile << "<Relop> is invalid" << endl;
-    }
+	ofile << "\t<Relop> -> == | ^= | > | < | => | =<" << endl;
+	if (currentLex.lexeme == "==") {
+		ofile << "\t<Relop> -> ==" << endl;
+		//outfile << "<Relop> -> ==" << endl;
+		Lexor();
+		
+	}
+	else if (currentLex.lexeme == "^=") {
+		ofile << "\t<Relop> -> ^=" << endl;
+		//outfile << "<Relop> -> ^=" << endl;
+		Lexor();
+		// GenerateInstruction("NEQ", NULLADDR);
+	}
+	else if (currentLex.lexeme == ">") {
+		ofile << "\t<Relop> -> >" << endl;
+		//outfile << "<Relop> -> >" << endl;
+		Lexor();
+		// GenerateInstruction("GRT", NULLADDR);
+	}
+	else if (currentLex.lexeme == "<") {
+		ofile << "\t<Relop> -> <" << endl;
+		//outfile << "<Relop> -> <" << endl;
+		Lexor();
+		// GenerateInstruction("LES", NULLADDR);
+	}
+	else if (currentLex.lexeme == "=>") {
+		ofile << "\t<Relop> -> =>" << endl;
+		//outfile << "<Relop> -> =>" << endl;
+		Lexor();
+		// GenerateInstruction("GEQ", NULLADDR);
+	}
+	else if (currentLex.lexeme == "=<") {
+		ofile << "\t<Relop> -> =<" << endl;
+		//outfile << "<Relop> -> =<" << endl;
+		Lexor();
+		// GenerateInstruction("LEQ", NULLADDR);
+	}
+	else {
+		ofile << "<Relop> is invalid" << endl;
+		//outfile << "<Relop> is invalid" << endl;
+	}
 }
 
 void Expression()
@@ -749,57 +769,60 @@ void Term()
 
 void TermPrime()
 {
-    //ofile << "<Term Prime> -> * <Factor><Term Prime> | / <Factor><Term Prime> | <Factor>" << endl;
-    if (currentLex.lexeme == "*") {
-        ofile << "\t<Term Prime> -> *  <Factor> <Term Prime>" << endl;
-        //outfile << "<Term Prime> -> *  <Factor> <Term Prime>" << endl;
-        Lexor();
-        Factor();
-        TermPrime();
-    }
-    else if (currentLex.lexeme == "/") {
-        ofile << "\t<Term Prime> -> /  <Factor> <Term Prime>" << endl;
-        //outfile << "<Term Prime> -> /  <Factor> <Term Prime>" << endl;
-        Lexor();
-        Factor();
-        TermPrime();
-    }
-    else if (currentLex.token == Identifier) {
-        ofile << "\t<Term Prime> -> <Factor>" << endl;
-        //outfile << "<Term Prime> -> <Factor>" << endl;
-        Factor();
-    }
-    else if (currentLex.token == Integer) {
-        ofile << "\t<Term Prime> -> <Factor>" << endl;
-        //outfile << "<Term Prime> -> <Factor>" << endl;
-        Factor();
-    }
-    else if (currentLex.lexeme == "(") {
-        ofile << "\t<Term Prime> -> <Factor> << endl" << endl;
-        //outfile << "<Term Prime> -> <Factor>" << endl;
-        Factor();
-    }
-    else if (currentLex.token == Real) {
-        ofile << "\t<Term Prime> -> <Factor>" << endl;
-        //outfile << "<Term Prime> -> <Factor>" << endl;
-        Factor();
-    }
-    else if (currentLex.lexeme == "true") {
-        ofile << "\t<Term Prime> -> <Factor>" << endl;
-        //outfile << "<Term Prime> -> <Factor>" << endl;
-        Factor();
-    }
-    else if (currentLex.lexeme == "false") {
-        ofile << "\t<Term Prime> -> <Factor>" << endl;
-        //outfile << "<Term Prime> -> <Factor>" << endl;
-        Factor();
-    }
-    else {
-        ofile << "\t<Term Prime> -> ";
-        //outfile << "<Term Prime> -> <Empty>" << endl;
-        Empty();
-    }
+	//ofile << "<Term Prime> -> * <Factor><Term Prime> | / <Factor><Term Prime> | <Factor>" << endl;
+	if (currentLex.lexeme == "*") {
+		ofile << "\t<Term Prime> -> *  <Factor> <Term Prime>" << endl;
+		//outfile << "<Term Prime> -> *  <Factor> <Term Prime>" << endl;
+		Lexor();
+		Factor();
+		TermPrime();
+		GenerateInstruction("MUL", NULLADDR);
+	}
+	else if (currentLex.lexeme == "/") {
+		ofile << "\t<Term Prime> -> /  <Factor> <Term Prime>" << endl;
+		//outfile << "<Term Prime> -> /  <Factor> <Term Prime>" << endl;
+		Lexor();
+		Factor();
+		TermPrime();
+		GenerateInstruction("DIV", NULLADDR);
+	}
+	else if (currentLex.token == Identifier) {
+		ofile << "\t<Term Prime> -> <Factor>" << endl;
+		//outfile << "<Term Prime> -> <Factor>" << endl;
+		Factor();
+	}
+	else if (currentLex.token == Integer) {
+		ofile << "\t<Term Prime> -> <Factor>" << endl;
+		//outfile << "<Term Prime> -> <Factor>" << endl;
+		Factor();
+	}
+	else if (currentLex.lexeme == "(") {
+		ofile << "\t<Term Prime> -> <Factor> << endl" << endl;
+		//outfile << "<Term Prime> -> <Factor>" << endl;
+		Factor();
+	}
+	else if (currentLex.token == Real) {
+		ofile << "\t<Term Prime> -> <Factor>" << endl;
+		//outfile << "<Term Prime> -> <Factor>" << endl;
+		Factor();
+	}
+	else if (currentLex.lexeme == "true") {
+		ofile << "\t<Term Prime> -> <Factor>" << endl;
+		//outfile << "<Term Prime> -> <Factor>" << endl;
+		Factor();
+	}
+	else if (currentLex.lexeme == "false") {
+		ofile << "\t<Term Prime> -> <Factor>" << endl;
+		//outfile << "<Term Prime> -> <Factor>" << endl;
+		Factor();
+	}
+	else {
+		ofile << "\t<Term Prime> -> ";
+		//outfile << "<Term Prime> -> <Empty>" << endl;
+		Empty();
+	}
 }
+
 
 void Factor()
 {
