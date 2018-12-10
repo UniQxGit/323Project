@@ -44,7 +44,7 @@ void Statement();
 void Compound();
 void Assign();
 void If();
-void IfPrime();
+void IfPrime(Instruction* instr);
 void Return();
 void ReturnPrime();
 void Print();
@@ -454,12 +454,15 @@ void If()
     //ofile << "<If> -> if (<Condition>) <Statement> <If Prime>" << endl;
     if (currentLex.lexeme == "if"){
         Lexor();
+		Instruction* label = GenerateInstruction("LABEL", NULLADDR);
         if (currentLex.lexeme == "("){
             Lexor();
+			Condition();
+			Instruction* instCache = GenerateInstruction("JUMPZ", NULLADDR);
             if (currentLex.lexeme == ")"){
                 Lexor();
-                Statement();
-                IfPrime();
+				Statement();
+                IfPrime(instCache);
             }
             else {
                 ofile << "ERROR: expected a ')'" << endl;
@@ -474,18 +477,23 @@ void If()
     }
 }
 
-void IfPrime()
+void IfPrime(Instruction* instr)
 {
     //ofile << "<If Prime> -> endif | else <Statement> endif" << endl;
     if (currentLex.lexeme == "endif"){
         ofile << "\t<If Prime> -> endif" << endl;
         Lexor();
+		instr->address = instructions.size();
     }
     else if (currentLex.lexeme == "else"){
-        ofile << "\t<If Prime> -> else <Statement> <IfPrime>" << endl;
+		ofile << "\t<If Prime> -> else <Statement> endif" << endl;
+        //ofile << "\t<If Prime> -> else <Statement> <IfPrime>" << endl; original, for same reason as below
         Lexor();
+		Instruction* elseLabel = GenerateInstruction("LABEL", NULLADDR);
+		instr->address = elseLabel->index;
         Statement();
-        IfPrime();
+		Lexor();
+        //IfPrime(); original, but i think the way the syntax works is that there will never be more than one else and i think the professor said there's no nested ifs
     }
 }
 
@@ -584,14 +592,18 @@ void While()
         ofile << "\t<While> -> while ( <Condition>  )  <Statement>" << endl;
         //outfile << "<While> -> while ( <Condition>  )  <Statement>" << endl;
         Lexor();
+		Instruction* label = GenerateInstruction("LABEL", NULLADDR);
         if (currentLex.lexeme == "(")
         {
             Lexor();
-            Condition();
+			Condition();
+			Instruction* instCache = GenerateInstruction("JUMPZ", NULLADDR);
             if (currentLex.lexeme == ")")
             {
                 Lexor();
                 Statement();
+				GenerateInstruction("JUMP", label->index);
+				instCache->address = instructions.size();
             }
             else
             {
