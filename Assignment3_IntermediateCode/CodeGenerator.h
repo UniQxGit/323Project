@@ -11,6 +11,10 @@
 #define CodeGenerator_h
 
 #include <vector>
+
+
+void PrintAllSymbols();
+
 struct Symbol
 {
 	Lexeme lex;
@@ -56,16 +60,24 @@ void InsertSymbol(Lexeme lex)
 {
 	if(symbols.count(lex.lexeme) > 0)
 	{
-		std::cout << "ERROR: Duplicate Symbol!" << std::endl;
+		std::cout << "ERROR: Duplicate Symbol for " << lex.lexeme << "!" << std::endl;
 		return;
 	}
+	std::cout << addressCounter << std::endl;
 	Symbol sym = Symbol(lex,MLOCBASE + addressCounter);
 	symbols[lex.lexeme] = sym;
 	addressCounter++;
+	std::cout << "Added: (" << lex.lexeme << "," << LexToStr(lex.token) << ")" << std::endl;
+	PrintAllSymbols();
 }
 
 int GetAddress(Lexeme lex)
 {
+	if(symbols.count(lex.lexeme) == 0)
+	{
+		std::cout << "ERROR: symbol " << lex.lexeme << " Does not exist!" << std::endl; 
+		return -1;
+	}
 	return symbols[lex.lexeme].address;
 }
 
@@ -89,6 +101,9 @@ void PrintAllSymbols()
 	int i = 0;
 	for (auto const& x : symbols)
 	{
+		if (x.second.lex.lexeme == "")
+			continue;
+		std::cout << "Symbols: (|" << x.second.lex.lexeme << "|,|" << LexToStr(x.second.lex.token) << "|)" << std::endl;
 		//x.First = key x.second = value
         ofile << std::left << std::setw(15) << x.first << std::left << std::setw(15) << LexToStr(x.second.lex.token) << x.second.address << std::endl;
 	    i++;

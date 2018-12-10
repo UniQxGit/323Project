@@ -161,7 +161,10 @@ void FunctionDefinitionsPrime()
 void Function()
 {
     ofile << "\t<Function> -> function <Identifier> [ <Opt Parameter List> ] <Opt Declaration List> <Body>" << endl;
+    
     if (!Lexor("_identifier")){return;}
+    InsertSymbol(currentLex); //Insert the function identifier into symbol table.
+
     if (!Lexor("[")){return;}
     
     Lexor(); //Toss the [
@@ -327,13 +330,12 @@ void IDs()
     ofile << "\t<IDs> -> <Identifier>, <IDs Prime>" << endl;
     if (currentLex.token == Identifier)
     {
-        InsertSymbol(currentLex);
         if (symbols.count(currentLex.lexeme) > 0)
         {
             GenerateInstruction("STDIN",NULLADDR);
             GenerateInstruction("POPM",GetAddress(currentLex));
         }
-        
+        InsertSymbol(currentLex);
         Lexor();
         if (currentLex.lexeme == ","){
             Lexor();
@@ -429,10 +431,12 @@ void Compound()
 void Assign()
 {
     ofile << "\t<Assign> -> <Identifier> = <Expression> ;" << endl;
+    GenerateInstruction("POPM",GetAddress(currentLex));
     Lexor();
     if (currentLex.lexeme == "="){
         Lexor();
         Expression();
+
         if (currentLex.lexeme == ";"){
             Lexor();
         }
@@ -520,6 +524,7 @@ void Print()
         ofile << "\t<Print> -> put ( <Expression> );" << endl;
         Lexor();
         if (currentLex.lexeme == "("){
+            GenerateInstruction("STDOUT",NULLADDR);
             Lexor();
             Expression();
             if (currentLex.lexeme == ")"){
@@ -670,6 +675,7 @@ void ExpressionPrime()
         Lexor();
         Term();
         ExpressionPrime();
+        GenerateInstruction("ADD",NULLADDR);
     }
     else if (currentLex.lexeme == "-") {
         ofile << "\t<Expression Prime> -> - <Term> <Expression Prime>" << endl;
@@ -677,6 +683,7 @@ void ExpressionPrime()
         Lexor();
         Term();
         ExpressionPrime();
+        GenerateInstruction("SUB",NULLADDR);
     }
     else if (currentLex.token == Identifier) {
         ofile << "\t<Expression Prime> -> <Term>" << endl;
@@ -787,6 +794,8 @@ void Factor()
     // ofile << "<Factor> -> - <Primary> | <Primary>" << endl;
     if (currentLex.lexeme == "-") {
         ofile << "\t<Factor> -> -  <Primary>" << endl;
+        GenerateInstruction("PUSHI",-1);
+        GenerateInstruction("MUL",NULLADDR);
         //outfile << "<Factor> -> -  <Primary>" << endl;
         Lexor();
         Primary();
@@ -803,6 +812,7 @@ void Primary()
     
     //ofile << "<Primary> -> <Identifier> | <Integer> | <Identifier> ( <IDs> ) | ( <Expression> ) <Real> | true | false" << endl;
     if (currentLex.token == Identifier) {
+        GenerateInstruction("PUSHM",GetAddress(currentLex));
         ofile << "\t<Primary> -> <Identifier>" << endl;
         //    outfile << "<Primary> -> <Identifier>" << endl;
         Lexor();
@@ -830,6 +840,7 @@ void Primary()
         }
     }
     else if (currentLex.token == Integer) {
+        GenerateInstruction("PUSHI",stoi(currentLex.lexeme));
         ofile << "\t<Primary> -> <Integer>" << endl;
         //outfile << "<Primary> -> <Integer>" << endl;
         Lexor();
@@ -853,11 +864,13 @@ void Primary()
         Lexor();
     }
     else if (currentLex.lexeme == "true") {
+        GenerateInstruction("PUSHI",1);
         ofile << "\t<Primary> -> true" << endl;
         //outfile << "<Primary> -> true" << endl;
         Lexor();
     }
     else if (currentLex.lexeme == "false") {
+        GenerateInstruction("PUSHI",0);
         ofile << "\t<Primary> -> false" << endl;
         //outfile << "<Primary> -> false" << endl;
         Lexor();
